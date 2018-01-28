@@ -1,0 +1,32 @@
+      - name: Install MySQL
+        apt: name="{{ item }}" state=present update_cache=yes
+        with_items:
+          - mysql-server
+          - mysql-client
+
+      - name: Start MySQL Server
+        service: name=mysql state=started enabled=yes
+
+      - name: Create Application Database
+        mysql_db:
+          name: "{{ db_name}}"
+          state: present
+
+      - name: Create Database User
+        mysql_user:
+          name: "{{ db_user }}"
+          password: "{{ db_password }}"
+          priv: '*.*:ALL'
+          state: present
+          host: '%'
+
+      - name: MySQL commands to create table and entry
+        copy: src=mysql_entries.sql dest=/tmp/mysql_entries.sql
+
+      - name: Execute sql script
+        mysql_db:
+          name: "{{ db_name}}"
+          login_user: "{{ db_user }}"
+          login_password: "{{ db_password }}"
+          state: import
+          target: /tmp/mysql_entries.sql
